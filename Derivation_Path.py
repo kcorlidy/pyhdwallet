@@ -56,6 +56,10 @@ class bip44(object):
 		h = hexlify(b)
 		return h if sys.version < '3' else h.decode('utf8')
 
+	def gen(self):
+		#generate amount of address,pubkey,privkey
+		pass
+
 if __name__ == '__main__':
 	bip = bip44.path("m/44'/0'/0'/0/0")
 	bip.entropy = key.to_mnemonic(data="a9495fe923ce601f4394c8a7adadabc3").seed()
@@ -63,4 +67,4 @@ if __name__ == '__main__':
 		bip.bip32ex_key(),
 		bip.address(),
 		bip.key_pairs(),
-		bip.Private())
+		bip.wif())

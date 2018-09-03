@@ -11,6 +11,7 @@ class bip44(object):
 		self.path 			= path
 		self.BIP32_HARDEN 	= 0x80000000
 		self.k 				= None
+		self.accounts 		= {}
 
 	@staticmethod
 	def initialize(p,seed = None):
@@ -30,20 +31,22 @@ class bip44(object):
 		print("Using random seed",self.b2h(seed))
 		return seed
 
-	def Account(self):
+	def account(self):
 		#Account Extended Private/Public Key
-		pass
+		return self.accounts
 
 	def address(self,k = None):
 		return self.k.Address() if k == None else k.Address()
 
 	def bip32ex_path(self): 
 		k = BIP32Key.fromEntropy(self.e)
-		for p in self.path:
+		for _,p in enumerate(self.path):
 			if "'" in p and p != 'm':
 				k = k.ChildKey(int(p.strip("'"))+self.BIP32_HARDEN)
 			elif p != 'm':
 				k = k.ChildKey(int(p))
+			if _ == 3:
+				self.accounts[self.showpath(self.path)[:-1]] = (k.ExtendedKey(),k.ExtendedKey(private=False))
 		self.k = k
 
 	def index(self,n):
@@ -51,6 +54,7 @@ class bip44(object):
 		return k
 		
 	def exkey(self):
+		#BIP32 Extended Private/Public Key
 		return k.ExtendedKey(),k.ExtendedKey(private=False)
 
 	def cokey(self , k = None):
@@ -75,9 +79,7 @@ class bip44(object):
 		return h if sys.version < '3' else h.decode('utf8')
 
 	def gen(self,n = 1):
-		def showpath(p):
-			return "".join([s+"/" for s in self.path])
-		main_path = showpath(self.path)
+		main_path = self.showpath(self.path)
 		self.clear()
 		for i in range(0,n):
 			index = self.index(i)
@@ -86,6 +88,8 @@ class bip44(object):
 			address = self.address(index)
 			key = self.cokey(index)
 
+	def showpath(self,p):
+		return "".join([s+"/" for s in self.path])
 
 	def dump(self):
 		#generate amount of address,pubkey,privkey into db
@@ -99,7 +103,6 @@ class bip44(object):
 
 	def clear(self):
 		#bip32utils used generator,which influenced the next result.So need to clear it
-		self.bip32ex_path()
 		self.address()
 		self.cokey()
 		self.wif()
@@ -111,6 +114,7 @@ class bip49(object):
 		
 
 if __name__ == '__main__':
-	bip = bip44.initialize("m/44'/0'/0'/0")
-	bip.entropy = key.to_mnemonic(data="a9495fe923ce601f4394c8a7adadabc3").seed()
+	entropy = key.to_mnemonic(data="a9495fe923ce601f4394c8a7adadabc3").seed()
+	bip = bip44.initialize("m/44'/0'/0'",seed=entropy)
 	bip.gen(5)
+#'xb8iGpFaUoyVnoEU6W8e1VNQbWh3pqgkJxaZwppb5EynAaWDdGWntYjhQyamhSCC8FP'

@@ -1,5 +1,4 @@
 from mnemonic import Mnemonic as mc
-from bip32utils import BIP32Key
 from binascii import unhexlify,hexlify
 import sys
 
@@ -24,22 +23,8 @@ class key(object):
 		m = key(m = mc(lang).generate(strength))
 		return m
 
-	def root_key(self,passphrase=""):
-		seed = mc.to_seed(self.m, passphrase=passphrase)
-		xprv = BIP32Key.fromEntropy(seed).ExtendedKey() 
-		xpub = BIP32Key.fromEntropy(seed).ExtendedKey(private=False) 
-		#seed = self.b2h(seed)
-		return xprv,xpub
-
 	def seed(self,passphrase=""):
 		return mc.to_seed(self.m, passphrase=passphrase)
 
 	def cointype(self):
 		return None
-
-
-def main():
-	print(key.to_mnemonic(data="a9495fe923ce601f4394c8a7adadabc3").root_key())
-
-if __name__ == '__main__':
-	main()

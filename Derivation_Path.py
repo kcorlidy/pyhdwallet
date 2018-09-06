@@ -16,7 +16,7 @@ class bip44(object):
 	@staticmethod
 	def initialize(p,seed = None):
 		p = p.split("/")
-		state = False if p[0].lower() != "m" or "44" not in p[1] else True 
+		state = False if p[0].lower() != "m" or p[1] not in ["44'","49'"] else True 
 		#if false mean user gave an unexpected path
 		if state == False:
 			raise Exception("Path error:please give a correct path")	
@@ -55,7 +55,7 @@ class bip44(object):
 		
 	def exkey(self):
 		#BIP32 Extended Private/Public Key
-		return k.ExtendedKey(),k.ExtendedKey(private=False)
+		return self.k.ExtendedKey(),self.k.ExtendedKey(private=False)
 
 	def cokey(self , k = None):
 		#Derived coin Private/Public Key
@@ -115,6 +115,6 @@ class bip49(object):
 
 if __name__ == '__main__':
 	entropy = key.to_mnemonic(data="a9495fe923ce601f4394c8a7adadabc3").seed()
-	bip = bip44.initialize("m/44'/0'/0'",seed=entropy)
-	bip.gen(5)
-#'xb8iGpFaUoyVnoEU6W8e1VNQbWh3pqgkJxaZwppb5EynAaWDdGWntYjhQyamhSCC8FP'
+	bip = bip44.initialize("m/49'/0'/0'/0",seed=entropy)
+	print(bip.exkey())
+	#bip.gen(5)

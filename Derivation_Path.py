@@ -1,4 +1,4 @@
-from bip32utils import BIP32Key
+from bip32 import BIP32Key
 from root_key import key
 from binascii import unhexlify,hexlify
 import sys
@@ -116,12 +116,6 @@ class bip44(object):
 		self.cokey()
 		self.wif()
 	
-
-class bip49(object):
-	def __init__(self, arg):
-		self.arg = arg
-		
-
 if __name__ == '__main__':
 	entropy = key.to_mnemonic(data="a9495fe923ce601f4394c8a7adadabc3").seed()
 	bip = bip44.initialize("m/84'/0'/0'/0",seed=entropy,bip=84)

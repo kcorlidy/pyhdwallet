@@ -5,7 +5,7 @@ import sys
 import sqlite3
 
 
-class bip44(object):
+class bips(object):
 	def __init__(self,e = None,path = None,bip=44,cointype="bitcoin",testnet=False):
 		self.e 				= self.warning() if e == None else e
 		self.path 			= path
@@ -17,15 +17,16 @@ class bip44(object):
 		self.testnet		= testnet
 
 	@staticmethod
-	def initialize(p,seed = None,bip=44,cointype="bitcoin",testnet=False):
+	def initialize(p,seed = None,cointype="bitcoin",testnet=False):
 		p = p.split("/")
 		state = False if p[0].lower() != "m" or p[1] not in ["44'","49'","84'"] else True 
 		#if false mean user gave an unexpected path
+		bip = int(p[1][:-1])
 		if state == False:
 			raise Exception("Path error:please give a correct path")	
 		if seed == None:
 			print("If you do not specify a seed, you will use a random seed")		
-		bip = bip44(path=p,e=seed,bip=bip,cointype=cointype,testnet=testnet)
+		bip = bips(path=p,e=seed,bip=bip,cointype=cointype,testnet=testnet)
 		bip.bip32ex_path()
 		return bip
 
@@ -45,7 +46,7 @@ class bip44(object):
 			return self.k.P2WPKHoP2SHAddress() if k == None else k.P2WPKHoP2SHAddress()
 		elif self.bip == 84:
 			return self.k.P2WPKHAddress() if k == None else k.P2WPKHAddress()
-
+		
 	def bip32ex_path(self): 
 		k = BIP32Key.fromEntropy(self.e,testnet=self.testnet)
 		for _,p in enumerate(self.path):
@@ -89,26 +90,19 @@ class bip44(object):
 	def gen(self,n = 1):
 		main_path = self.showpath(self.path)
 		self.clear()
+		gen_list = {}
 		for i in range(0,n):
 			index = self.index(i)
 			subpath = main_path+str(i)
 			wif = self.wif(index)
 			address = self.address(index)
-			key = self.cokey(index)
-			print(address,key[1],wif,"\n")
+			key = self.cokey(index) #key[0] priv key[1] pub
+			gen_list[i] = [subpath,address,wif,key]
+
+		return {k:gen_list[k] for k in sorted(gen_list.keys())}
 
 	def showpath(self,p):
 		return "".join([s+"/" for s in self.path])
-
-	def dump(self):
-		#generate amount of address,pubkey,privkey into db
-		conn = sqlite3.connect('{}.db'.format("d"))
-		c = conn.cursor()
-		c.execute('''CREATE TABLE stocks
-		             (date text, trans text, symbol text, qty real, price real)''')
-		c.execute("INSERT INTO stocks VALUES ('2006-01-05','BUY','RHAT',100,35.14)")
-		conn.commit()
-		conn.close()
 
 	def clear(self):
 		#bip32utils used generator,which influenced the next result.So need to clear it
@@ -118,7 +112,7 @@ class bip44(object):
 	
 if __name__ == '__main__':
 	entropy = key.to_mnemonic(data="a9495fe923ce601f4394c8a7adadabc3").seed()
-	bip = bip44.initialize("m/84'/0'/0'/0",seed=entropy,bip=84)
+	bip = bips.initialize("m/84'/0'/0'/0",seed=entropy)
 	#print(bip.exkey())
 	#print(bip.address())
-	bip.gen(5)
+	print(bip.gen(7))

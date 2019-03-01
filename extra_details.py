@@ -2,7 +2,7 @@ from mnemonic import Mnemonic
 import unittest
 import binascii
 from Derivation_Path import bips
-
+from root_key import key
 
 _store = [
 ["m/44'/0'/0'/0/0","1HnA8fYPskppWonizo8v1owqjBDMviz5Zh","02707f1e1a0e1ea7ba8ce83710604304fa85f995b6b0d15ff752cf70602cf4757e","KzR58Tj1WkLvMJmyZzt3P4KTLJpv2tn7xK32nfHGNq9Ffw8WLUEc"],
@@ -16,35 +16,34 @@ _store = [
 
 class test_(unittest.TestCase):
 
-	def test_to_seed(self):
+	def test_to_seed_by_words(self):
 		words = "plate inject impose rigid plug tornado march art vast filter issue village"
 		passphrase = ""
 		seed = Mnemonic.to_seed(words, passphrase)
 		seed_ = b"99b5ccefea83beb7dd42e62bb3bceb965b935c26c85290febc48f571060a1d8c8f4e847c45b67864977ae1d0c1e83e6ae0019a78c571c0fc3fdee6e020329664"
 		self.assertEqual(binascii.hexlify(seed), seed_)
 
-	def test_to_rootkey(self):
-		seed_ = b"99b5ccefea83beb7dd42e62bb3bceb965b935c26c85290febc48f571060a1d8c8f4e847c45b67864977ae1d0c1e83e6ae0019a78c571c0fc3fdee6e020329664"
-		bip32_bitcoin_rootkey = bips.initialize("m",
-			seed=binascii.unhexlify(seed_))
-
-		root_key = "xprv9s21ZrQH143K3S5BSBFrNLMXmeb3MpzDMY8GRosBHnP2cjdLmgprmfQufvWS6gv5BeRL4smJzTo9SnT33PBis5Ywq79L3fJmkRj7niu1fjo"
-		#self.assertEqual(bip32_bitcoin_rootkey, root_key)
-
-	def test_to_accounts(self):
+	def test_to_accounts_by_words_passphrase(self):
 		words = "plate inject impose rigid plug tornado march art vast filter issue village"
 		passphrase = ""
 		seed = Mnemonic.to_seed(words, passphrase)
-		bip32_bitcoin_EKP = bips.initialize("m/44'/0'/0'/0",
-			seed=seed)
-		store = bip32_bitcoin_EKP.gen(7)
+		bip44 = bips.initialize("m/44'/0'/0'/0",seed=seed)
+		store = bip44.gen(7)
 		self.assertEqual(
 			{k:[ele if p !=3 else ele[1] for p,ele in enumerate(v)] for k,v in store.items()}, # remove private key
 			{p:v[:-2] + v[-2:][::-1] for p,v in enumerate(_store)}) # store
-		
+
+	def test_to_accounts_by_entropy(self):
+		entropy = "a62e81c7dcfa6dcae1f066f1aacddafa"
+		seed = key.to_mnemonic(data=entropy).seed()
+		bip44 = bips.initialize("m/44'/0'/0'/0",seed=seed)
+		store = bip44.gen(7)
+		self.assertEqual(
+			{k:[ele if p !=3 else ele[1] for p,ele in enumerate(v)] for k,v in store.items()},
+			{p:v[:-2] + v[-2:][::-1] for p,v in enumerate(_store)})
+	
 def __main__():
 	unittest.main()
-
 
 if __name__ == "__main__":
 	__main__()

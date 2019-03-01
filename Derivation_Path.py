@@ -117,9 +117,3 @@ class bips(object):
 		self.cokey()
 		self.wif()
 	
-if __name__ == '__main__':
-	entropy = key.to_mnemonic(data="a9495fe923ce601f4394c8a7adadabc3").seed()
-	bip = bips.initialize("m/84'/0'/0'/0",seed=entropy)
-	#print(bip.exkey())
-	#print(bip.address())
-	print(bip.gen(7))

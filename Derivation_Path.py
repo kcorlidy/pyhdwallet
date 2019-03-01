@@ -19,16 +19,22 @@ class bips(object):
 	@staticmethod
 	def initialize(p,seed = None,cointype="bitcoin",testnet=False):
 		p = p.split("/")
-		state = False if p[0].lower() != "m" or p[1] not in ["44'","49'","84'"] else True 
+		p = p + [None] if p[0] == p[-1] else p  
+		state = False if p[0].lower() != "m" or p[1] not in ["44'","49'","84'",None] else True 
 		#if false mean user gave an unexpected path
-		bip = int(p[1][:-1])
+		
 		if state == False:
 			raise Exception("Path error:please give a correct path")	
 		if seed == None:
-			print("If you do not specify a seed, you will use a random seed")		
-		bip = bips(path=p,e=seed,bip=bip,cointype=cointype,testnet=testnet)
-		bip.bip32ex_path()
-		return bip
+			print("If you do not specify a seed, you will use a random seed")
+		bip = int(p[1][:-1]) if p[-1] else None
+		
+		bip_ = bips(path=p,e=seed,bip=bip,cointype=cointype,testnet=testnet)
+		bip_.bip32ex_path()
+		if not bip:
+			# BIP32 Root Key
+			return bip_.k.b2h(bip_.k.PublicKey())
+		return bip_
 
 	def warning(self):
 		seed = key.generate(128).seed()
@@ -49,13 +55,14 @@ class bips(object):
 		
 	def bip32ex_path(self): 
 		k = BIP32Key.fromEntropy(self.e,testnet=self.testnet)
-		for _,p in enumerate(self.path):
-			if "'" in p and p != 'm':
-				k = k.ChildKey(int(p.strip("'"))+self.BIP32_HARDEN)
-			elif p != 'm':
-				k = k.ChildKey(int(p))
-			if _ == 3:
-				self.accounts[self.showpath(self.path)[:-1]] = (k.ExtendedKey(),k.ExtendedKey(private=False))
+		if self.path[-1]:
+			for _,p in enumerate(self.path):
+				if "'" in p and p != 'm':
+					k = k.ChildKey(int(p.strip("'"))+self.BIP32_HARDEN)
+				elif p != 'm':
+					k = k.ChildKey(int(p))
+				if _ == 3:
+					self.accounts[self.showpath(self.path)[:-1]] = (k.ExtendedKey(),k.ExtendedKey(private=False))
 		self.k = k
 
 	def index(self,n):

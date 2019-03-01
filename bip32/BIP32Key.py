@@ -5,6 +5,7 @@
 #
 
 import os
+import sys
 import hmac
 import hashlib
 import ecdsa
@@ -373,7 +374,6 @@ class BIP32Key(object):
 
 
 if __name__ == "__main__":
-    import sys
     # BIP0032 Test vector 1
 
     entropy = bytes(codecs.decode(b'000102030405060708090A0B0C0D0E0F'),"utf8")

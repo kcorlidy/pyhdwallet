@@ -1,8 +1,7 @@
 from mnemonic import Mnemonic
 import unittest
 import binascii
-from Derivation_Path import bips
-from root_key import key
+from Derivation_Path import bips,key
 
 _store = [
 ["m/44'/0'/0'/0/0","1HnA8fYPskppWonizo8v1owqjBDMviz5Zh","02707f1e1a0e1ea7ba8ce83710604304fa85f995b6b0d15ff752cf70602cf4757e","KzR58Tj1WkLvMJmyZzt3P4KTLJpv2tn7xK32nfHGNq9Ffw8WLUEc"],

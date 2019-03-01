@@ -1,5 +1,4 @@
-from Derivation_Path import bips
-from root_key import key
+from Derivation_Path import bips, key
 import unittest
 
 bip44 = {

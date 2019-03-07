@@ -29,20 +29,20 @@ bip84 = {0: ["m/84'/0'/0'/0/0", 'bc1ql292pj7jjg74ztw4verxmpz3kpmqcjumt7sldc', 'L
 class Derivation_test(unittest.TestCase):
 	"""docstring for Derivation_test"""
 	def test_bip44(self):
-		entropy = bip39.to_mnemonic(data="a9495fe923ce601f4394c8a7adadabc3").seed()
+		entropy = bip39.to_mnemonic(entropy="a9495fe923ce601f4394c8a7adadabc3").seed()
 		bip = bips.initialize("m/44'/0'/0'/0",seed=entropy)
 		self.assertEqual(bip.exkey()[0],"xprv9za8mkD4SQHLRzKtPBvZK5WgiVkcchBNH7YAZVr9JQJbUKVWu12BRigThsmwHRJXaUMjua5MrjSa6JFREVuu19dywkGZchaHYp18KGArWaR")
 		self.assertEqual(bip.gen(7),bip44)
 
 	def test_bip49(self):
-		entropy = bip39.to_mnemonic(data="a9495fe923ce601f4394c8a7adadabc3").seed()
+		entropy = bip39.to_mnemonic(entropy="a9495fe923ce601f4394c8a7adadabc3").seed()
 		bip = bips.initialize("m/49'/0'/0'/0",seed=entropy)
 		self.assertEqual(bip.exkey()[0],"yprvAMA64twBQxXTiLD8Mrcbqj9DrJLmKoTFEHAMTMZ9uYcwZ9xnmvwPP9Hmx5sMComtLSjsxEdxK615eqnJRFJsCngk87rdKGeY6752yiHP5mA")
 		self.assertEqual(bip.gen(7),bip49)
 
 
 	def test_bip84(self):
-		entropy = bip39.to_mnemonic(data="a9495fe923ce601f4394c8a7adadabc3").seed()
+		entropy = bip39.to_mnemonic(entropy="a9495fe923ce601f4394c8a7adadabc3").seed()
 		bip = bips.initialize("m/84'/0'/0'/0",seed=entropy)
 		self.assertEqual(bip.exkey()[0],"zprvAfMVBbtYFkvnAK4F3eWJikburFJgTFLgYt4hVmL1kzr7PMFhci5fDu2bvztHP6JcbPQxMgTa65dRw1mYSBqDZ3HxnhN91k9PUsjjeSueLQv")
 		self.assertEqual(bip.gen(7),bip84)

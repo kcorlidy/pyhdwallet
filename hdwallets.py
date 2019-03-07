@@ -2,7 +2,7 @@ from _bip32 import BIP32Key
 from binascii import unhexlify,hexlify
 import sys
 import sqlite3
-from mnemonic import Mnemonic as mc
+from mnemonic import Mnemonic
 
 """
 TODO:
@@ -10,7 +10,7 @@ TODO:
 		`Account Extended key`.
 
 	Also i will add more functions, i.e. `to text/csv`. 
-	But it is not easy to cooperate with different type of database, because it needs more libraries.
+	But it is not easy to cooperate with different type of entropybase, because it needs more libraries.
 """
 
 
@@ -40,16 +40,30 @@ class bips(object):
 		raise NotImplementedError
 
 	@staticmethod
-	def initialize(p,seed = None,cointype="bitcoin",testnet=False):
+	def initialize(p,
+			seed = None,passphrase = "", words = None, entropy = None,
+			cointype="bitcoin",testnet=False):
+		"""
+			p: path
+			priority: seed > words > entropy
+		"""
+
+		# When see is empty, so create seed if words or entropy has passed
+		if not seed and words:
+			seed = bip39(words).seed(passphrase)
+		elif not seed and entropy:
+			seed = bip39.to_mnemonic(entropy=entropy).seed(passphrase)
+		elif not seed:
+			print("If you do not specify a seed, you will use a random seed")
+
 		p = p.split("/")
 		p = p + [None] if p[0] == p[-1] else p  
 		state = False if p[0].lower() != "m" or p[1] not in ["44'","49'","84'",None] else True 
 		#if false mean user gave an unexpected path
 		
 		if state == False:
-			raise Exception("Path error:please give a correct path")	
-		if seed == None:
-			print("If you do not specify a seed, you will use a random seed")
+			raise Exception("Path error:please give a correct path")
+
 		bip = int(p[1][:-1]) if p[-1] else None
 		
 		bip_ = bips(path=p,e=seed,bip=bip,cointype=cointype,testnet=testnet)
@@ -139,6 +153,15 @@ class bips(object):
 	def root_key(self,key):
 		# key pair
 		self.bip32_root_key = key
+
+	def to_csv(self):
+		raise NotImplementedError
+
+	def to_text(self):
+		raise NotImplementedError
+
+	def to_sql(self):
+		raise NotImplementedError
 	
 
 	def clear(self):
@@ -153,19 +176,19 @@ class bip39(object):
 		self.m = m
 
 	@staticmethod
-	def to_mnemonic(data,lang="english"):
-		data = data if type(data) == bytes else bytes(data,"utf8")
-		m = bip39(m = mc(lang).to_mnemonic(unhexlify(data)))
+	def to_mnemonic(entropy,lang="english"):
+		entropy = entropy if type(entropy) == bytes else bytes(entropy,"utf8")
+		m = bip39(m = Mnemonic(lang).to_mnemonic(unhexlify(entropy)))
 		return m
 
 	@staticmethod
 	def generate(strength,lang="english"):
 		#gen_mnemonic
-		m = bip39(m = mc(lang).generate(strength))
+		m = bip39(m = Mnemonic(lang).generate(strength))
 		return m
 
 	def seed(self,passphrase=""):
-		return mc.to_seed(self.m, passphrase=passphrase)
+		return Mnemonic.to_seed(self.m, passphrase=passphrase)
 
 	def cointype(self):
 		raise NotImplementedError

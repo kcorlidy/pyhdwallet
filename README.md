@@ -10,7 +10,7 @@ How to generate coin address
 from mnemonic import Mnemonic
 import unittest
 import binascii
-from hdwallets import bips,bip39
+from hdwallets import bips
 
 _store = [
 ["m/44'/0'/0'/0/0","1HnA8fYPskppWonizo8v1owqjBDMviz5Zh","02707f1e1a0e1ea7ba8ce83710604304fa85f995b6b0d15ff752cf70602cf4757e","KzR58Tj1WkLvMJmyZzt3P4KTLJpv2tn7xK32nfHGNq9Ffw8WLUEc"],
@@ -35,16 +35,15 @@ class test_(unittest.TestCase):
 	def test_to_accounts_by_words_passphrase(self):
 		words = "plate inject impose rigid plug tornado march art vast filter issue village"
 		passphrase = ""
-		seed = Mnemonic.to_seed(words, passphrase)
-		bip44 = bips.initialize("m/44'/0'/0'/0",seed=seed)
+		bip44 = bips.initialize("m/44'/0'/0'/0",words=words, passphrase=passphrase)
 
 		# check root key
 		root_key = "xprv9s21ZrQH143K3S5BSBFrNLMXmeb3MpzDMY8GRosBHnP2cjdLmgprmfQufvWS6gv5BeRL4smJzTo9SnT33PBis5Ywq79L3fJmkRj7niu1fjo"
 		self.assertEqual(bip44.bip32_root_key[1],root_key)
 
 		# check ext key
-		root_key = "xprv9zZ1h87W4nFTEURfantKV84sexNWnY4fAHt3gPAXSnX7dRZDoBDCx5e77CxZPe9sK5F2TBTwNLc5gCDGNYbyxSWJ6fayPkAZLuLuwVwPSoZ"
-		self.assertEqual(bip44.bip32_root_key[1],root_key)
+		ext_key = "xprv9zZ1h87W4nFTEURfantKV84sexNWnY4fAHt3gPAXSnX7dRZDoBDCx5e77CxZPe9sK5F2TBTwNLc5gCDGNYbyxSWJ6fayPkAZLuLuwVwPSoZ"
+		self.assertEqual(bip44.bip32_ext_key[1],ext_key)
 
 		# generate addresses
 		store = bip44.gen(7)
@@ -54,8 +53,7 @@ class test_(unittest.TestCase):
 
 	def test_to_accounts_by_entropy(self):
 		entropy = "a62e81c7dcfa6dcae1f066f1aacddafa"
-		seed = bip39.to_mnemonic(data=entropy).seed()
-		bip44 = bips.initialize("m/44'/0'/0'/0",seed=seed)
+		bip44 = bips.initialize("m/44'/0'/0'/0",entropy=entropy)
 		store = bip44.gen(7)
 		self.assertEqual(
 			{k:[ele if p !=3 else ele[1] for p,ele in enumerate(v)] for k,v in store.items()},

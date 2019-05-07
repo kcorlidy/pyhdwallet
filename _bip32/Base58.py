@@ -3,8 +3,11 @@
 # Copyright 2014 Corgan Labs
 # See LICENSE.txt for distribution terms
 #
+# Modified by kcorlidy on 2019-05-07, because found an issue with input b"\x00\xff"*2
 
 from hashlib import sha256
+import unittest
+import re
 
 __base58_alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 __base58_alphabet_bytes = b'123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
@@ -48,9 +51,12 @@ def check_encode(raw):
 def decode(data):
     "Decode Bitcoin base58 format string to bytes"
     # Python 2.x compatability
+    x00 = re.findall(r"^[1]+", data)
+    x00 = len(x00[0]) if x00 else 0
+    
     if bytes != str:
         data = bytes(data, 'ascii')
-
+    
     val = 0
     for (i, c) in enumerate(data[::-1]):
         val += __base58_alphabet_bytes.find(c) * (__base58_radix**i)
@@ -62,7 +68,7 @@ def decode(data):
     if val:
         dec.append(val)
 
-    return bytes(dec[::-1])
+    return b"\x00"*x00 + bytes(dec[::-1])
 
 
 def check_decode(enc):
@@ -75,8 +81,25 @@ def check_decode(enc):
         return raw
 
 
+class test(unittest.TestCase):
+
+    def test_check_encode(self):
+        data = b'now is the time for all good men to come to the aid of their country'
+        enc = check_encode(data)
+        self.assertEqual(check_decode(enc), data)
+
+    def test_encode(self):
+        data = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz~!@#$%^&*()_+{}|:;'<>,./?"
+        enc = encode(data)
+        self.assertEqual(decode(enc), data)
+
+    def test_encode_utf8(self):
+        data = b"\x00\x00\xff\xff"
+        enc = encode(data)
+        print(enc)
+        self.assertEqual(decode(enc), data)
+
+
 if __name__ == '__main__':
-    assert(__base58_radix == 58)
-    data = b'now is the time for all good men to come to the aid of their country'
-    enc = check_encode(data)
-    assert(check_decode(enc) == data)
+
+    unittest.main()

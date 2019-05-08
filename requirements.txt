@@ -1,3 +1,2 @@
 python-mnemonic
 ecdsa
-sqlite3

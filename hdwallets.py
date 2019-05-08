@@ -4,29 +4,21 @@ import sys
 import sqlite3
 from mnemonic import Mnemonic
 
-"""
-TODO:
-	I want the script can display/modify more details, such as 
-		`Account Extended key`.
-
-	Also i will add more functions, i.e. `to text/csv`. 
-	But it is not easy to cooperate with different type of entropybase, because it needs more libraries.
-"""
-
 
 def b2h(b):
 	h = hexlify(b)
 	return h if sys.version < '3' else h.decode('utf8')
 
-def warning():
-	seed = bip39.generate(128).seed()
-	print("Using random seed",b2h(seed))
-	return seed
+def random_seed():
+	return bip39.generate(128).seed()
 
 class bips(object):
-	def __init__(self,e = None,path = None,bip=44,cointype="bitcoin",testnet=False):
-		self.e 				= warning() if e == None else e
+	def __init__(self, entropy = None, passphrase = "", mnemonic = None,
+				 path = None, bip=44, cointype="bitcoin", testnet=False):
+		self._entropy 		= entropy
+		self.mnemonic 		= mnemonic
 		self.path 			= path
+		self.passphrase 	= passphrase
 		self.BIP32_HARDEN 	= 0x80000000
 		self.k 				= None
 		self.accounts 		= {}
@@ -35,65 +27,63 @@ class bips(object):
 		self.bip32_ext_key 	= None
 		self.cointype		= cointype
 		self.testnet		= testnet
+		self.initialize
 
 	def root_key2seed(root_key):
 		raise NotImplementedError
 
-	@staticmethod
-	def initialize(p,
-			seed = None,passphrase = "", words = None, entropy = None,
-			cointype="bitcoin",testnet=False):
+	@property
+	def initialize(self):
 		"""
-			p: path
-			priority: seed > words > entropy
+			priority: seed > Mnemonic > _entropy
 		"""
 
-		# When see is empty, so create seed if words or entropy has passed
-		if not seed and words:
-			seed = bip39(words).seed(passphrase)
-		elif not seed and entropy:
-			seed = bip39.to_mnemonic(entropy=entropy).seed(passphrase)
-		elif not seed:
-			print("If you do not specify a seed, you will use a random seed")
+		# When see is empty, so create seed if Mnemonic or _entropy has passed
+		if self.mnemonic and not self._entropy:
+			self._entropy = bip39(self.mnemonic).seed(self.passphrase)
 
-		p = p.split("/")
-		p = p + [None] if p[0] == p[-1] else p  
-		state = False if p[0].lower() != "m" or p[1] not in ["44'","49'","84'",None] else True 
-		#if false mean user gave an unexpected path
+		elif self._entropy:
+			self._entropy = bip39.to_mnemonic(entropy=self._entropy).seed(self.passphrase)
+
+		else:
+			raise AttributeError("If you must specify entropy or mnemonic.")
+
+		# validate path
+		path = self.path.split("/")
+		self.path = path + [None] if path[0] == path[-1] else path  
+		state = False if self.path[0].lower() != "m" or self.path[1] not in ["44'","49'","84'",None] else True 
 		
 		if state == False:
-			raise Exception("Path error:please give a correct path")
+			raise RuntimeError("Path error:please give a correct path")
 
-		bip = int(p[1][:-1]) if p[-1] else None
-		
-		bip_ = bips(path=p,e=seed,bip=bip,cointype=cointype,testnet=testnet)
-		bip_.bip32ex_path()
-		if not bip:
-			# BIP32 Root Key
-			return self.bip32_root_key
-		return bip_
+		self.bip = int(path[1][:-1]) if path[-1] else None
+		# preparing generate child-key
+		self.bip32ex_path()
 
 	def bip32ex_path(self): 
-		k = BIP32Key.fromEntropy(self.e,testnet=self.testnet)
+		k = BIP32Key.fromEntropy(self._entropy,testnet=self.testnet)
+
 		if not self.bip32_root_key:
-			# to avoid an situation that override your root key
+			# store root key.
 			self.bip32_root_key = (k.ExtendedKey(private=False, encoded=True),
 						k.ExtendedKey(private=True, encoded=True))
+
 		if self.path[-1]:
-			for _,p in enumerate(self.path):
+			for _, p in enumerate(self.path):
 				if "'" in p and p != 'm':
 					k = k.ChildKey(int(p.strip("'"))+self.BIP32_HARDEN)
 				elif p != 'm':
 					k = k.ChildKey(int(p))
 				if _ == 3:
-					self.accounts[self.showpath(self.path)[:-1]] = (k.ExtendedKey(),k.ExtendedKey(private=False))
+					self.accounts[self.showpath(self.path)[:-1]] = (k.ExtendedKey(),
+																	k.ExtendedKey(private=False))
+		
 		self.k = k
 		self.bip32_ext_key = (k.ExtendedKey(private=False, encoded=True),
 						k.ExtendedKey(private=True, encoded=True))
 
 	def index(self,n):
-		k = self.k.ChildKey(n)
-		return k
+		return self.k.ChildKey(n)
 
 	def account(self):
 		#Account Extended Private/Public Key
@@ -101,11 +91,11 @@ class bips(object):
 
 	def address(self,k = None):
 		if self.bip == 44:
-			return self.k.Address() if k == None else k.Address()
+			return self.k.Address() if not k else k.Address()
 		elif self.bip == 49:
-			return self.k.P2WPKHoP2SHAddress() if k == None else k.P2WPKHoP2SHAddress()
+			return self.k.P2WPKHoP2SHAddress() if not k else k.P2WPKHoP2SHAddress()
 		elif self.bip == 84:
-			return self.k.P2WPKHAddress() if k == None else k.P2WPKHAddress()	
+			return self.k.P2WPKHAddress() if not k  else k.P2WPKHAddress()	
 		
 	def exkey(self):
 		#BIP32 Extended Private/Public Key
@@ -119,31 +109,31 @@ class bips(object):
 	def wif(self,k = None):
 		return self.k.WalletImportFormat() if k == None else k.WalletImportFormat()
 
-	def gen(self,n = 1):
+	def generator(self, n = 1):
 		main_path = self.showpath(self.path)
-		self.clear()
-		gen_list = {}
-		for i in range(0,n):
+		self.next()
+		
+		gen_list = []
+		for i in range(n):
 			index = self.index(i)
-			subpath = main_path+str(i)
+			subpath = main_path + str(i)
 			wif = self.wif(index)
 			address = self.address(index)
-			key = self.cokey(index) #key[0] priv key[1] pub
-			gen_list[i] = [subpath,address,wif,key]
-
-		return {k:gen_list[k] for k in sorted(gen_list.keys())}
+			key = self.cokey(index) #pri, pub
+			gen_list.append([subpath,address,wif,key])
+		
+		return gen_list
 
 	def showpath(self,p):
 		return "".join([s+"/" for s in self.path])
 
 	@property
 	def entropy(self):
-		return self.e
+		return self._entropy
 
 	@entropy.setter
-	def entropy(self,e):
-		self.e = e
-		print("Seed has changed,hex value:",b2h(e))
+	def entropy(self, _entropy):
+		self._entropy = _entropy
 
 	@property
 	def root_key(self):
@@ -151,8 +141,30 @@ class bips(object):
 
 	@root_key.setter
 	def root_key(self,key):
-		# key pair
-		self.bip32_root_key = key
+		self.bip32_root_key = key	
+
+	def next(self):
+		self.address()
+		self.cokey()
+		self.wif()
+
+	def details(self):
+		__format = {
+			"BIP39 Mnemonic": self.mnemonic,
+			"BIP39 Passphrase (optional)": self.passphrase,
+			"BIP39 Seed": self._entropy,
+			"Coin": self.cointype,
+			"BIP32 Root Key": self.bip32_root_key,
+			"Purpose": self.path[1][:-1],
+			"Coin": self.path[2][:-1],
+			"Account": None,
+			"External / Internal": None,
+			"Account Extended Private Key": None,
+			"Account Extended Public Key": None,
+			"BIP32 Derivation Path": self.showpath(self.path),
+			"BIP32 Extended Pub/Pri Key": self.bip32_ext_key,
+			"Derived Addresses": []
+		}
 
 	def to_csv(self):
 		raise NotImplementedError
@@ -162,32 +174,22 @@ class bips(object):
 
 	def to_sql(self):
 		raise NotImplementedError
-	
-
-	def clear(self):
-		#bip32utils used generator,which influenced the next result.So need to clear it
-		self.address()
-		self.cokey()
-		self.wif()
 
 class bip39(object):
-	def __init__(self,m):
+	def __init__(self, m):
 		self.version = "ver1.0"
 		self.m = m
 
 	@staticmethod
-	def to_mnemonic(entropy,lang="english"):
-		entropy = entropy if type(entropy) == bytes else bytes(entropy,"utf8")
-		m = bip39(m = Mnemonic(lang).to_mnemonic(unhexlify(entropy)))
-		return m
+	def to_mnemonic(entropy, lang="english"):
+		entropy = entropy if isinstance(entropy, bytes) else bytes(entropy,"utf8")
+		return bip39(m = Mnemonic(lang).to_mnemonic(unhexlify(entropy)))
 
 	@staticmethod
 	def generate(strength,lang="english"):
-		#gen_mnemonic
-		m = bip39(m = Mnemonic(lang).generate(strength))
-		return m
+		return bip39(m = Mnemonic(lang).generate(strength))
 
-	def seed(self,passphrase=""):
+	def seed(self, passphrase=""):
 		return Mnemonic.to_seed(self.m, passphrase=passphrase)
 
 	def cointype(self):

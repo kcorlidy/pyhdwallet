@@ -54,28 +54,35 @@ class test_(unittest.TestCase):
 		self.assertEqual(bip44.bip32_ext_key[1],ext_key)
 
 		# generate addresses
-		store = bip44.generator(7)
+		store = bip44.generator(7).Derived_Addresses
 	
 		self.assertEqual(store, _store)
 
 	def test_to_accounts_by_entropy(self):
 		entropy = "a62e81c7dcfa6dcae1f066f1aacddafa"
 		bip44 = bips(path="m/44'/0'/0'/0",entropy=entropy)
-		store = bip44.generator(7)
+		store = bip44.generator(7).Derived_Addresses
 		
 		self.assertEqual(store, _store)
 
 	def test_specified_account(self):
 		entropy = "a62e81c7dcfa6dcae1f066f1aacddafa"
 		bip44 = bips(path="m/44'/0'/1'/0",entropy=entropy)
-		store = bip44.generator(7)
+		store = bip44.generator(7).Derived_Addresses
 		self.assertEqual(store, _store2)
 	
 	def test_specified_Internal(self):
 		entropy = "a62e81c7dcfa6dcae1f066f1aacddafa"
 		bip44 = bips(path="m/44'/0'/1'/1",entropy=entropy)
-		store = bip44.generator(7)
+		store = bip44.generator(7).Derived_Addresses
 		self.assertEqual(store, _store3)
+
+	def test_to_json(self):
+		entropy = "a62e81c7dcfa6dcae1f066f1aacddafa"
+		bip44 = bips(path="m/44'/0'/1'/1",entropy=entropy)
+		store = bip44.generator(7)
+		self.assertEqual(store.Derived_Addresses, _store3)
+		store.to_json()
 
 if __name__ == "__main__":
 

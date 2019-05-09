@@ -3,7 +3,11 @@ from binascii import unhexlify,hexlify
 import sys
 import sqlite3
 from mnemonic import Mnemonic
-
+import re
+from pprint import pprint
+print = pprint
+from collections import OrderedDict
+import json
 
 def b2h(b):
 	h = hexlify(b)
@@ -16,6 +20,7 @@ class bips(object):
 	def __init__(self, entropy = None, passphrase = "", mnemonic = None,
 				 path = None, bip=44, cointype="bitcoin", testnet=False):
 		self._entropy 		= entropy
+		self.seed 			= None
 		self.mnemonic 		= mnemonic
 		self.path 			= path
 		self.passphrase 	= passphrase
@@ -40,10 +45,12 @@ class bips(object):
 
 		# When see is empty, so create seed if Mnemonic or _entropy has passed
 		if self.mnemonic and not self._entropy:
-			self._entropy = bip39(self.mnemonic).seed(self.passphrase)
+			self.seed = bip39(self.mnemonic).seed(self.passphrase)
 
 		elif self._entropy:
-			self._entropy = bip39.to_mnemonic(entropy=self._entropy).seed(self.passphrase)
+			tp = bip39.to_mnemonic(entropy=self._entropy)
+			self.mnemonic = tp.m
+			self.seed = tp.seed(self.passphrase)
 
 		else:
 			raise AttributeError("If you must specify entropy or mnemonic.")
@@ -57,11 +64,14 @@ class bips(object):
 			raise RuntimeError("Path error:please give a correct path")
 
 		self.bip = int(path[1][:-1]) if path[-1] else None
+
 		# preparing generate child-key
 		self.bip32ex_path()
 
+		# self.entropy = self.mnemonic = self.passphrase = None # clear privacy
+
 	def bip32ex_path(self): 
-		k = BIP32Key.fromEntropy(self._entropy,testnet=self.testnet)
+		k = BIP32Key.fromEntropy(self.seed, testnet=self.testnet)
 
 		if not self.bip32_root_key:
 			# store root key.
@@ -121,19 +131,12 @@ class bips(object):
 			address = self.address(index)
 			key = self.cokey(index) #pri, pub
 			gen_list.append([subpath,address,wif,key])
-		
-		return gen_list
+
+		return self.details(addr=gen_list)
 
 	def showpath(self,p):
 		return "".join([s+"/" for s in self.path])
 
-	@property
-	def entropy(self):
-		return self._entropy
-
-	@entropy.setter
-	def entropy(self, _entropy):
-		self._entropy = _entropy
 
 	@property
 	def root_key(self):
@@ -148,29 +151,37 @@ class bips(object):
 		self.cokey()
 		self.wif()
 
-	def details(self):
-		__format = {
-			"BIP39 Mnemonic": self.mnemonic,
-			"BIP39 Passphrase (optional)": self.passphrase,
-			"BIP39 Seed": self._entropy,
-			"Coin": self.cointype,
+	def details(self, addr):
+		__format = OrderedDict({
+			"Entropy": self._entropy,
+			"Mnemonic": self.mnemonic,
+			"Seed": hexlify(self.seed).decode(),
 			"BIP32 Root Key": self.bip32_root_key,
+			"Coin": self.cointype,
 			"Purpose": self.path[1][:-1],
 			"Coin": self.path[2][:-1],
-			"Account": None,
-			"External / Internal": None,
+			"Account": self.path[3][:-1],
+			"External/Internal": self.path[4],
 			"Account Extended Private Key": None,
 			"Account Extended Public Key": None,
 			"BIP32 Derivation Path": self.showpath(self.path),
 			"BIP32 Extended Pub/Pri Key": self.bip32_ext_key,
-			"Derived Addresses": []
-		}
+			"Derived Addresses": addr
+		})
+		return FileStruct(__format)
+
+class FileStruct(object):
+
+	def __init__(self, details = None):
+		self.details = details
+		self.__dict__.update({ re.sub(r"\W", "_", k) :v for k,v in details.items()})
 
 	def to_csv(self):
 		raise NotImplementedError
 
-	def to_text(self):
-		raise NotImplementedError
+	def to_json(self):
+		with open(self.details.get("Entropy") + ".json", "w+") as fd:
+			json.dump(self.details, fd)
 
 	def to_sql(self):
 		raise NotImplementedError
@@ -186,7 +197,7 @@ class bip39(object):
 		return bip39(m = Mnemonic(lang).to_mnemonic(unhexlify(entropy)))
 
 	@staticmethod
-	def generate(strength,lang="english"):
+	def generate(strength, lang="english"):
 		return bip39(m = Mnemonic(lang).generate(strength))
 
 	def seed(self, passphrase=""):

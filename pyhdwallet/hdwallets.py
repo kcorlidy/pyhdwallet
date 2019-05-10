@@ -183,7 +183,7 @@ class FileStruct(object):
 								 "Wallet import form": wif})
 
 	def to_json(self):
-		with open(self.details.get("Entropy") + ".json", "w+") as fd:
+		with open('{}.json'.format(self.Mnemonic), "w+") as fd:
 			json.dump(self.details, fd, indent=4)
 
 	def to_sql(self):

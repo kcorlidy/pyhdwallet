@@ -8,6 +8,8 @@ from pprint import pprint
 print = pprint
 from collections import OrderedDict
 import json
+import csv
+
 
 def b2h(b):
 	h = hexlify(b)
@@ -130,21 +132,12 @@ class bips(object):
 			wif = self.wif(index)
 			address = self.address(index)
 			key = self.cokey(index) #pri, pub
-			gen_list.append([subpath,address,wif,key])
+			gen_list.append([subpath, address, key[1], key[0], wif])
 
 		return self.details(addr=gen_list)
 
 	def showpath(self,p):
 		return "".join([s+"/" for s in self.path])
-
-
-	@property
-	def root_key(self):
-		return self.bip32_root_key
-
-	@root_key.setter
-	def root_key(self,key):
-		self.bip32_root_key = key	
 
 	def next(self):
 		self.address()
@@ -164,8 +157,8 @@ class bips(object):
 			"External/Internal": self.path[4],
 			"Account Extended Private Key": None,
 			"Account Extended Public Key": None,
-			"BIP32 Derivation Path": self.showpath(self.path),
-			"BIP32 Extended Pub/Pri Key": self.bip32_ext_key,
+			"BIP32 Derivation Path": self.showpath(self.path)[:-1],
+			"BIP32 Extended Pri/Pub Key": self.bip32_ext_key, 
 			"Derived Addresses": addr
 		})
 		return FileStruct(__format)
@@ -177,11 +170,21 @@ class FileStruct(object):
 		self.__dict__.update({ re.sub(r"\W", "_", k) :v for k,v in details.items()})
 
 	def to_csv(self):
-		raise NotImplementedError
+		with open('{}.csv'.format(self.Mnemonic), 'w+', newline='') as csvfile:
+			fieldnames = ['Path', 'Address', 'Public Key', 'Private Key', 'Wallet import form']
+			writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+			writer.writeheader()
+			for path, address, pub, pri, wif in self.Derived_Addresses:
+				writer.writerow({'Path': path,
+								 'Address': address,
+								 "Public Key": pub,
+								 "Private Key": pri,
+								 "Wallet import form": wif})
 
 	def to_json(self):
 		with open(self.details.get("Entropy") + ".json", "w+") as fd:
-			json.dump(self.details, fd)
+			json.dump(self.details, fd, indent=4)
 
 	def to_sql(self):
 		raise NotImplementedError
@@ -203,5 +206,3 @@ class bip39(object):
 	def seed(self, passphrase=""):
 		return Mnemonic.to_seed(self.m, passphrase=passphrase)
 
-	def cointype(self):
-		raise NotImplementedError

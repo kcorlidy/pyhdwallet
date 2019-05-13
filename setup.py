@@ -1,27 +1,25 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 version = "0.1"
 
-REQUIREMENTS = [i.strip() for i in open("requirements.txt").readlines()]
-
 setup(
-    name="pyhdwallet",
-    version=version,
-    packages=[
-        "pyhdwallet",
-        "pyhdwallet._bip32",
-        "pyhdwallet.examples"
-    ],
-    package_data={
-        '_bip32': ['*.db', '*.json'],
+    name = "pyhdwallet",
+    version = version,
+    packages = find_packages(),
+    package_data = {
+        '': ['_bip32/data/*.db'],
     },
-    entry_points={'console_scripts': [
-        'examples = pyhdwallet.examples.test:main'
-    ]},
-    install_requires=REQUIREMENTS,
-    author="kcorlidy Chain",
-    author_email="kcorlidy@outlook.com",
-    url="https://github.com/kcorlidy/pyhdwallet",
-    license="http://opensource.org/licenses/MIT",
-    description="Hierarchical Deterministic (HD) key creation tools"
+    #data_files=[('pyhdwallet/_bip32/data/bip32version.db', 'pyhdwallet/_bip32/data')],
+    install_requires = [
+        "mnemonic",
+        "ecdsa"],
+    zip_safe=False,
+    platforms="any",
+    python_requires=">=3.5",
+    author = "kcorlidy Chan",
+    author_email = "kcorlidy@outlook.com",
+    url = "https://github.com/kcorlidy/pyhdwallet",
+    license = "http://opensource.org/licenses/MIT",
+    description = "Hierarchical Deterministic (HD) key creation tools",
+    long_description = ""
 )

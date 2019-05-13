@@ -1,4 +1,8 @@
-from _bip32 import BIP32Key
+
+__doc__ = ""
+
+
+from ._bip32 import BIP32Key
 from binascii import unhexlify,hexlify
 import sys
 import sqlite3
@@ -10,6 +14,7 @@ from collections import OrderedDict
 import json
 import csv
 
+__all__ = ["bips", "bip39"]
 
 def b2h(b):
 	h = hexlify(b)

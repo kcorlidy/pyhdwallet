@@ -20,6 +20,8 @@ from ecdsa.ecdsa import int_to_string, string_to_int
 from ecdsa.numbertheory import square_root_mod_prime as sqrt_mod
 from .segwit_addr import encode as bech32_encode
 
+__all__ = ["BIP32Key"]
+
 MIN_ENTROPY_LEN = 128        # bits
 BIP32_HARDEN    = 0x80000000 # choose from hardened set of child keys
 CURVE_GEN       = ecdsa.ecdsa.generator_secp256k1

@@ -1,0 +1,11 @@
+Metadata-Version: 1.2
+Name: pyhdwallet
+Version: 0.1
+Summary: Hierarchical Deterministic (HD) key creation tools
+Home-page: https://github.com/kcorlidy/pyhdwallet
+Author: kcorlidy Chan
+Author-email: kcorlidy@outlook.com
+License: http://opensource.org/licenses/MIT
+Description: UNKNOWN
+Platform: any
+Requires-Python: >=3.5

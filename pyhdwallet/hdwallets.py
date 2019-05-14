@@ -1,7 +1,3 @@
-
-__doc__ = ""
-
-
 from ._bip32 import BIP32Key
 from binascii import unhexlify,hexlify
 import sys
@@ -13,8 +9,6 @@ print = pprint
 from collections import OrderedDict
 import json
 import csv
-
-__all__ = ["bips", "bip39"]
 
 def b2h(b):
 	h = hexlify(b)
@@ -42,12 +36,18 @@ class bips(object):
 		self.initialize
 
 	def root_key2seed(root_key):
+		"""
+			NotImplementedError this function
+		"""
 		raise NotImplementedError
 
 	@property
 	def initialize(self):
 		"""
-			priority: seed > Mnemonic > _entropy
+			Initialize the fundamental parameters that we need through giving data
+			Priority: Seed > Mnemonic > Entropy
+			
+			return None
 		"""
 
 		# When see is empty, so create seed if Mnemonic or _entropy has passed
@@ -77,7 +77,11 @@ class bips(object):
 
 		# self.entropy = self.mnemonic = self.passphrase = None # clear privacy
 
-	def bip32ex_path(self): 
+	def bip32ex_path(self):
+		"""
+			analysis the giving path, save rook key and extend key
+			return None
+		"""
 		k = BIP32Key.fromEntropy(self.seed, testnet=self.testnet)
 
 		if not self.bip32_root_key:
@@ -100,13 +104,24 @@ class bips(object):
 						k.ExtendedKey(private=True, encoded=True))
 
 	def index(self,n):
+		"""
+			return ChildKey(n)
+		"""
 		return self.k.ChildKey(n)
 
 	def account(self):
-		#Account Extended Private/Public Key
+		"""
+			return (Account Extended Private key and Public Key)
+		"""
 		return self.accounts
 
-	def address(self,k = None):
+	def address(self, k = None):
+		"""
+			bip44 -> P2PKH
+			bip49 -> P2WPKH-nested-in-P2SH 
+			bip84 -> P2WPKH
+			return address
+		"""
 		if self.bip == 44:
 			return self.k.Address() if not k else k.Address()
 		elif self.bip == 49:
@@ -115,18 +130,30 @@ class bips(object):
 			return self.k.P2WPKHAddress() if not k  else k.P2WPKHAddress()	
 		
 	def exkey(self):
-		#BIP32 Extended Private/Public Key
+		"""
+			return (BIP32 Extended Private kye and Public Key)
+		"""
 		return self.k.ExtendedKey(bip=self.bip,cointype=self.cointype),self.k.ExtendedKey(private=False,bip=self.bip,cointype=self.cointype)
 
 	def cokey(self , k = None):
-		#Derived coin Private/Public Key
+		"""
+			return (Derived coin Private key and Public Key)
+		"""
 		key = (self.k.PrivateKey(),self.k.PublicKey()) if k == None else (k.PrivateKey(),k.PublicKey())
 		return  b2h(key[0]),b2h(key[1])
 
-	def wif(self,k = None):
+	def wif(self, k = None):
+		"""
+			return WalletImportFormat
+		"""
 		return self.k.WalletImportFormat() if k == None else k.WalletImportFormat()
 
 	def generator(self, n = 1):
+		"""
+			`n` is how many accounts you need. 
+			create multiple Account that contain `path`, `wif`, `address`, `pubkey`, `prikey`
+			return FileStruct
+		"""
 		main_path = self.showpath(self.path)
 		self.next()
 		
@@ -141,7 +168,11 @@ class bips(object):
 
 		return self.details(addr=gen_list)
 
-	def showpath(self,p):
+	def showpath(self, p):
+		"""
+			p -> giving path list
+			return path
+		"""
 		return "".join([s+"/" for s in self.path])
 
 	def next(self):
@@ -150,6 +181,11 @@ class bips(object):
 		self.wif()
 
 	def details(self, addr):
+		"""
+			address -> list of Derived Addresses
+
+			return FileStruct
+		"""
 		__format = OrderedDict({
 			"Entropy": self._entropy,
 			"Mnemonic": self.mnemonic,
@@ -192,6 +228,9 @@ class FileStruct(object):
 			json.dump(self.details, fd, indent=4)
 
 	def to_sql(self):
+		"""
+			NotImplementedError
+		"""
 		raise NotImplementedError
 
 class bip39(object):

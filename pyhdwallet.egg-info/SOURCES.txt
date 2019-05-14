@@ -8,8 +8,8 @@ pyhdwallet.egg-info/dependency_links.txt
 pyhdwallet.egg-info/not-zip-safe
 pyhdwallet.egg-info/requires.txt
 pyhdwallet.egg-info/top_level.txt
-pyhdwallet/_bip32/BIP32Key.py
 pyhdwallet/_bip32/Base58.py
+pyhdwallet/_bip32/_BIP32Key.py
 pyhdwallet/_bip32/__init__.py
 pyhdwallet/_bip32/fver.py
 pyhdwallet/_bip32/segwit_addr.py

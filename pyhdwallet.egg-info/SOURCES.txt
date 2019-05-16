@@ -15,5 +15,4 @@ pyhdwallet/_bip32/fver.py
 pyhdwallet/_bip32/segwit_addr.py
 pyhdwallet/_bip32/test.py
 pyhdwallet/_bip32/data/bip32version.db
-test/test_Derivation.py
 test/test_extra_details.py

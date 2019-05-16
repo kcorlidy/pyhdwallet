@@ -1,7 +1,7 @@
 from mnemonic import Mnemonic
 import unittest
 import binascii
-from hdwallets import bips
+from pyhdwallet.hdwallets import bips
 
 
 class test(unittest.TestCase):

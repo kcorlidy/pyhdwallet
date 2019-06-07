@@ -78,7 +78,7 @@ def check_decode(enc):
     if chk != sha256(sha256(raw).digest()).digest()[:4]:
         raise ValueError("base58 decoding checksum error")
     else:
-        return raw[2:]
+        return raw[1:]
 
 
 class test(unittest.TestCase):
